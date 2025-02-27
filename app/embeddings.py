@@ -1,3 +1,8 @@
+import sys
+import os
+
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
+
 from sentence_transformers import SentenceTransformer
 import psycopg2
 from config.settings import DATABASE_URL
@@ -22,7 +27,7 @@ def batch_update_embeddings(table, id_column, text_column, embedding_column):
     conn = get_connection()
     cur = conn.cursor()
 
-    # Fetch data where embedding is NULL
+    # Fetch records where embedding is NULL
     cur.execute(f"SELECT {id_column}, {text_column} FROM {table} WHERE {embedding_column} IS NULL;")
     records = cur.fetchall()
 
@@ -35,10 +40,10 @@ def batch_update_embeddings(table, id_column, text_column, embedding_column):
     # Extract text data
     ids, texts = zip(*records)
 
-    # Encode all names in a batch
+    # Generate vector embeddings in batch
     embeddings = model.encode(list(texts)).tolist()
 
-    # Update the table with embeddings
+    # Update database with generated embeddings
     for record_id, embedding in zip(ids, embeddings):
         cur.execute(f"UPDATE {table} SET {embedding_column} = %s WHERE {id_column} = %s;", (embedding, record_id))
 
@@ -48,7 +53,8 @@ def batch_update_embeddings(table, id_column, text_column, embedding_column):
     print(f"Embeddings updated successfully in {table}.")
 
 if __name__ == "__main__":
+    # Update embeddings for all required tables
     batch_update_embeddings("employees", "id", "name", "employee_name_embedding")
-    batch_update_embeddings("orders", "id", "customer_name", "customer_name_embedding")  # Updated column name
-    batch_update_embeddings("products", "id", "name", "product_name_embedding")  # Updated column name
+    batch_update_embeddings("orders", "id", "customer_name", "customer_name_embedding")
+    batch_update_embeddings("products", "id", "name", "product_name_embedding")
     print("All embeddings generated and updated in the database.")
