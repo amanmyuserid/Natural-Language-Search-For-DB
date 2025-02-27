@@ -11,24 +11,30 @@ def get_connection():
     """Establish a database connection."""
     return psycopg2.connect(DATABASE_URL)
 
-def insert_departments():
-    """Insert sample department data."""
-    conn = get_connection()
+def insert_departments(conn):
+    """
+    Insert sample department data into the 'departments' table.
+    If a department already exists, it will not be inserted again.
+    """
     cur = conn.cursor()
 
     departments = ["HR", "Engineering", "Sales", "Marketing"]
-    
-    for dept in departments:
-        cur.execute("INSERT INTO departments (name) VALUES (%s) ON CONFLICT (name) DO NOTHING;", (dept,))
-    
+
+    for department in departments:
+        cur.execute(
+            "INSERT INTO departments (name) VALUES (%s) ON CONFLICT (name) DO NOTHING;",
+            (department,)
+        )
+
     conn.commit()
     cur.close()
-    conn.close()
     print("Departments inserted successfully.")
 
-def insert_employees():
-    """Insert sample employees (without embeddings yet)."""
-    conn = get_connection()
+def insert_employees(conn):
+    """
+    Insert sample employee data into the 'employees' table.
+    If an employee's email already exists, the record will not be duplicated.
+    """
     cur = conn.cursor()
 
     employees = [
@@ -44,20 +50,25 @@ def insert_employees():
         ("Jack Reacher", 2, "jack@company.com", 74000.00)
     ]
 
-    for name, dept_id, email, salary in employees:
+    for name, department_id, email, salary in employees:
         cur.execute(
-            "INSERT INTO employees (name, department_id, email, salary) VALUES (%s, %s, %s, %s) ON CONFLICT (email) DO NOTHING;",
-            (name, dept_id, email, salary)
+            """
+            INSERT INTO employees (name, department_id, email, salary) 
+            VALUES (%s, %s, %s, %s) 
+            ON CONFLICT (email) DO NOTHING;
+            """,
+            (name, department_id, email, salary)
         )
-    
+
     conn.commit()
     cur.close()
-    conn.close()
     print("Employees inserted successfully.")
 
-def insert_orders():
-    """Insert sample orders (without embeddings yet)."""
-    conn = get_connection()
+def insert_orders(conn):
+    """
+    Insert sample order data into the 'orders' table.
+    This links orders to employees who handled them.
+    """
     cur = conn.cursor()
 
     orders = [
@@ -78,20 +89,24 @@ def insert_orders():
         ("Lex Luthor", 2, 5600.00, "2025-02-14")
     ]
 
-    for customer_name, emp_id, total, date in orders:
+    for customer_name, employee_id, order_total, order_date in orders:
         cur.execute(
-            "INSERT INTO orders (customer_name, employee_id, order_total, order_date) VALUES (%s, %s, %s, %s);",
-            (customer_name, emp_id, total, date)
+            """
+            INSERT INTO orders (customer_name, employee_id, order_total, order_date) 
+            VALUES (%s, %s, %s, %s);
+            """,
+            (customer_name, employee_id, order_total, order_date)
         )
 
     conn.commit()
     cur.close()
-    conn.close()
     print("Orders inserted successfully.")
 
-def insert_products():
-    """Insert sample product data (without embeddings yet)."""
-    conn = get_connection()
+def insert_products(conn):
+    """
+    Insert sample product data into the 'products' table.
+    This includes various electronics and gadgets.
+    """
     cur = conn.cursor()
 
     products = [
@@ -114,18 +129,27 @@ def insert_products():
 
     for name, price in products:
         cur.execute(
-            "INSERT INTO products (name, price) VALUES (%s, %s) ON CONFLICT (name) DO NOTHING;",
+            """
+            INSERT INTO products (name, price) 
+            VALUES (%s, %s) 
+            ON CONFLICT (name) DO NOTHING;
+            """,
             (name, price)
         )
 
     conn.commit()
     cur.close()
-    conn.close()
     print("Products inserted successfully.")
 
 if __name__ == "__main__":
-    insert_departments()
-    insert_employees()
-    insert_orders()
-    insert_products()
-    print("All initial data inserted successfully.")
+    # Establish a single database connection for efficiency
+    conn = get_connection()
+
+    try:
+        insert_departments(conn)
+        insert_employees(conn)
+        insert_orders(conn)
+        insert_products(conn)
+        print("All initial data inserted successfully.")
+    finally:
+        conn.close()  # Ensure the database connection is closed after all inserts

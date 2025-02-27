@@ -7,11 +7,11 @@ import psycopg2
 from config.settings import DATABASE_URL
 
 def get_connection():
-    """Establish a database connection."""
+    """Establish a connection to PostgreSQL."""
     return psycopg2.connect(DATABASE_URL)
 
 def initialize_db():
-    """Create all necessary tables in the database."""
+    """Create all necessary tables with consistent column naming."""
     conn = get_connection()
     cur = conn.cursor()
 
@@ -34,7 +34,7 @@ def initialize_db():
             department_id INT REFERENCES departments(id),
             email VARCHAR(255) UNIQUE NOT NULL,
             salary DECIMAL(10,2) NOT NULL,
-            name_embedding VECTOR(384)  -- Storing vector embeddings for name-based search
+            employee_name_embedding VECTOR(384) -- Store embeddings for employee names
         );
     """)
 
@@ -46,24 +46,24 @@ def initialize_db():
             employee_id INT REFERENCES employees(id),
             order_total DECIMAL(10,2) NOT NULL,
             order_date DATE NOT NULL,
-            customer_embedding VECTOR(384)  -- Storing vector embeddings for name-based search
+            customer_name_embedding VECTOR(384) -- Store embeddings for customer names
         );
     """)
 
-    # Create Products Table
+    # Create Products Table (Renaming `embedding` to `product_name_embedding`)
     cur.execute("""
         CREATE TABLE IF NOT EXISTS products (
             id SERIAL PRIMARY KEY,
             name VARCHAR(100) NOT NULL UNIQUE,
             price DECIMAL(10,2) NOT NULL,
-            embedding VECTOR(384)  -- Storing 384D vector embeddings
+            product_name_embedding VECTOR(384) -- Store embeddings for product names
         );
     """)
 
     conn.commit()
     cur.close()
     conn.close()
-    print("Database Initialized: All tables created successfully!")
+    print("Database initialized with consistent column naming.")
 
 if __name__ == "__main__":
     initialize_db()
