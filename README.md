@@ -1,4 +1,4 @@
-Yes, we can format all the sections consistently like point 4. Here's the complete README.md with a consistent formatting style throughout:
+
 
 ```markdown
 # Natural-Language-Search-For-DB
@@ -9,16 +9,16 @@ This project demonstrates an end-to-end solution for converting natural language
 
 ## 2. Project Description
 
-- **LLM-based SQL Query Generation:**
+- **LLM-based SQL Query Generation:**  
   Converts user queries into SQL. The system supports pure SQL queries, vector similarity search queries, and hybrid queries.
 
-- **SQL Injection Validation:**
+- **SQL Injection Validation:**  
   A dedicated module checks for potential SQL injection vulnerabilities, ensuring that only safe queries are executed.
 
-- **Vector Search with pgvector:**
+- **Vector Search with pgvector:**  
   Uses pgvector to store text embeddings and perform semantic similarity searches, improving query accuracy.
 
-- **Streamlit UI:**
+- **Streamlit UI:**  
   Provides a user-friendly web interface where users can enter natural language queries and view the results in real-time.
 
 ## 3. How to Run It
@@ -61,3 +61,4 @@ Natural-Language-Search-For-DB/
 ├── .env                          # Environment variables (e.g., GROQ_API_KEY, DATABASE_URL)
 └── README.md                     # This documentation file
 ```
+
