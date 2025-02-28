@@ -1,12 +1,17 @@
-from groq import Groq
+import sys
 import os
 import re
 from dotenv import load_dotenv
+from config.schema import SCHEMA_CONTEXT  # Shared schema context
+
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
+
+from groq import Groq
 
 # Load environment variables from .env file
 load_dotenv()
 
-# Allowed tables and columns for simple validation
+# Allowed tables and columns for simple validation (if needed)
 ALLOWED_TABLES = {"departments", "employees", "orders", "products"}
 ALLOWED_COLUMNS = {
     "departments": {"id", "name"},
@@ -23,7 +28,6 @@ def classify_query(natural_query: str) -> str:
     """
     query_lower = natural_query.lower()
     if "similar" in query_lower:
-        # If there is also a filtering condition (like price or date), treat it as HYBRID.
         if any(keyword in query_lower for keyword in ["less than", "above", "between", "cost", "price"]):
             return "HYBRID"
         else:
@@ -45,23 +49,25 @@ def generate_prompt(natural_query: str, schema_context: str, query_type: str) ->
     """
     base_instructions = (
         "You are an expert in SQL query generation. Based solely on the provided schema context, "
-        "generate a valid PostgreSQL SQL query that answers the user's query. Use parameterized queries where applicable. "
-        "Do not include any explanation or commentary in your output. If the context does not contain enough information "
-        "to generate a correct SQL query, respond with exactly: \"Insufficient information provided to generate a SQL query.\""
+        "generate a valid PostgreSQL SQL query that exactly answers the user's query. Use parameterized queries where applicable. "
+        "Do not include any explanation or commentary in your output."
     )
     
+    # Note: Emphasize that for vector similarity search, the operator must be applied to the embedding columns.
     if query_type == "SQL_ONLY":
         additional_instructions = "Generate a pure SQL query without any vector search operators."
     elif query_type == "VECTOR_ONLY":
         additional_instructions = (
             "Generate a SQL query that uses vector similarity search using pgvector operators. "
-            "Assume that the query should be converted to an embedding and compared with stored embeddings. "
-            "Use the '<->' operator for computing the Euclidean distance between vectors."
+            "Ensure that vector similarity is applied to the appropriate embedding columns (e.g., use 'product_name_embedding' for products). "
+            "Convert the query string to an embedding and compare it with the stored embedding using the '<->' operator."
         )
     elif query_type == "HYBRID":
         additional_instructions = (
             "Generate a SQL query that combines traditional SQL filtering (e.g., using ILIKE, numerical comparisons) "
-            "with vector similarity search using pgvector operators. Use the '<->' operator for vector similarity."
+            "with vector similarity search using pgvector operators. "
+            "For vector similarity, ensure you compare the query embedding with the appropriate embedding column (e.g., 'product_name_embedding' for products). "
+            "Use the '<->' operator for computing Euclidean distance between vectors."
         )
     else:
         additional_instructions = ""
@@ -87,12 +93,9 @@ def call_llm(prompt: str) -> str:
             raise ValueError("GROQ_API_KEY not found in environment variables")
         
         client = Groq(api_key=groq_api_key)
-        # Using a single system message with our entire prompt
         completion = client.chat.completions.create(
             model="llama-3.3-70b-versatile",
-            messages=[
-                {"role": "system", "content": prompt}
-            ],
+            messages=[{"role": "system", "content": prompt}],
             temperature=0.3,
             max_tokens=500,
             stream=False
@@ -105,17 +108,14 @@ def call_llm(prompt: str) -> str:
 
 def validate_query(sql_query: str) -> bool:
     """
-    Validate the generated SQL query by checking for disallowed keywords and ensuring
-    it only references allowed tables and columns.
+    Validate the generated SQL query by checking for disallowed keywords.
     
     Returns True if the query appears valid.
     """
-    # Reject dangerous operations
     dangerous_keywords = ["drop", "delete", "alter"]
     for word in dangerous_keywords:
         if re.search(r"\b" + word + r"\b", sql_query, re.IGNORECASE):
             return False
-    # Optionally, add more sophisticated checks on table/column names here.
     return True
 
 def generate_sql_query(natural_query: str, schema_context: str) -> str:
@@ -128,40 +128,12 @@ def generate_sql_query(natural_query: str, schema_context: str) -> str:
     query_type = classify_query(natural_query)
     prompt = generate_prompt(natural_query, schema_context, query_type)
     sql_query = call_llm(prompt)
-    if sql_query and validate_query(sql_query):
-        return sql_query
-    else:
-        return "Insufficient information provided to generate a SQL query."
+    # Return whatever query is generated for further validation.
+    return sql_query if sql_query else "Insufficient information provided to generate a SQL query."
 
 if __name__ == "__main__":
-    # Comprehensive schema context describing all tables and vector embedding columns.
-    schema_context = (
-        "Table: departments\n"
-        "  - id: SERIAL PRIMARY KEY\n"
-        "  - name: VARCHAR(100) UNIQUE\n\n"
-        "Table: employees\n"
-        "  - id: SERIAL PRIMARY KEY\n"
-        "  - name: VARCHAR(100)\n"
-        "  - department_id: INT (foreign key to departments.id)\n"
-        "  - email: VARCHAR(255) UNIQUE\n"
-        "  - salary: DECIMAL(10,2)\n"
-        "  - employee_name_embedding: VECTOR(384)\n\n"
-        "Table: orders\n"
-        "  - id: SERIAL PRIMARY KEY\n"
-        "  - customer_name: VARCHAR(100)\n"
-        "  - employee_id: INT (foreign key to employees.id)\n"
-        "  - order_total: DECIMAL(10,2)\n"
-        "  - order_date: DATE\n"
-        "  - customer_name_embedding: VECTOR(384)\n\n"
-        "Table: products\n"
-        "  - id: SERIAL PRIMARY KEY\n"
-        "  - name: VARCHAR(100) UNIQUE\n"
-        "  - price: DECIMAL(10,2)\n"
-        "  - product_name_embedding: VECTOR(384)"
-    )
-    
     # Example natural language query for testing
     natural_query = "Find products similar to iPhone 13 that cost less than 1000 dollars."
-    sql = generate_sql_query(natural_query, schema_context)
+    sql = generate_sql_query(natural_query, SCHEMA_CONTEXT)
     print("Generated SQL Query:")
     print(sql)
