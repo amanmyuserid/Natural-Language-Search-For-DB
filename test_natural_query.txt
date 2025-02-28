@@ -13,8 +13,6 @@
 # Unsafe Query 
 "Drop the orders table."
 
-# Out of SQL Query
-"I will kill you"
 
 # Out of SQL Query
 "How are you"
