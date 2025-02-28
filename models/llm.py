@@ -53,21 +53,23 @@ def generate_prompt(natural_query: str, schema_context: str, query_type: str) ->
         "Do not include any explanation or commentary in your output."
     )
     
-    # Note: Emphasize that for vector similarity search, the operator must be applied to the embedding columns.
     if query_type == "SQL_ONLY":
         additional_instructions = "Generate a pure SQL query without any vector search operators."
     elif query_type == "VECTOR_ONLY":
         additional_instructions = (
             "Generate a SQL query that uses vector similarity search using pgvector operators. "
-            "Ensure that vector similarity is applied to the appropriate embedding columns (e.g., use 'product_name_embedding' for products). "
-            "Convert the query string to an embedding and compare it with the stored embedding using the '<->' operator."
+            "For text similarity comparisons, do not use non-existent functions like to_vector(). "
+            "Instead, convert the input text into an embedding by retrieving the corresponding embedding from the table. "
+            "For example, for the employees table, use: employee_name_embedding <-> (SELECT employee_name_embedding FROM employees WHERE name ILIKE '<input_text>'). "
+            "Use the '<->' operator for computing Euclidean distance."
         )
     elif query_type == "HYBRID":
         additional_instructions = (
             "Generate a SQL query that combines traditional SQL filtering (e.g., using ILIKE, numerical comparisons) "
             "with vector similarity search using pgvector operators. "
-            "For vector similarity, ensure you compare the query embedding with the appropriate embedding column (e.g., 'product_name_embedding' for products). "
-            "Use the '<->' operator for computing Euclidean distance between vectors."
+            "For vector similarity, ensure you compare the query embedding with the appropriate embedding column. "
+            "For example, for the employees table, use: employee_name_embedding <-> (SELECT employee_name_embedding FROM employees WHERE name ILIKE '<input_text>'). "
+            "Use the '<->' operator for vector similarity."
         )
     else:
         additional_instructions = ""
@@ -121,19 +123,18 @@ def validate_query(sql_query: str) -> bool:
 def generate_sql_query(natural_query: str, schema_context: str) -> str:
     """
     Generate a SQL query from a natural language query and schema context.
-    This function classifies the query, builds a prompt, calls the LLM, and validates the output.
+    This function classifies the query, builds a prompt, calls the LLM, and returns the output.
     
     Returns the generated SQL query or a failure message.
     """
     query_type = classify_query(natural_query)
     prompt = generate_prompt(natural_query, schema_context, query_type)
     sql_query = call_llm(prompt)
-    # Return whatever query is generated for further validation.
     return sql_query if sql_query else "Insufficient information provided to generate a SQL query."
 
 if __name__ == "__main__":
     # Example natural language query for testing
-    natural_query = "Find products similar to iPhone 13 that cost less than 1000 dollars."
+    natural_query = "Find employees whose name is similar to 'Alice' and have a salary greater than 60000."
     sql = generate_sql_query(natural_query, SCHEMA_CONTEXT)
     print("Generated SQL Query:")
     print(sql)
