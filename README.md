@@ -5,21 +5,21 @@
 
 ## 1. Overview
 
-This project demonstrates an end-to-end solution for converting natural language queries into SQL using an LLM.
+This project demonstrates an end-to-end solution for converting natural language queries into SQL using an LLM. It i
 
 ## 2. Project Description
 
-- **LLM-based SQL Query Generation:**  
-  Converts user queries into SQL. The system supports pure SQL queries, vector similarity search queries, and hybrid queries.
+- **LLM-based SQL Query Generation:**
+  Converts user queries into SQL. The system supports pure SQL queries, vector similarity search queries, and hybrid
 
-- **SQL Injection Validation:**  
-  A dedicated module checks for potential SQL injection vulnerabilities, ensuring that only safe queries are executed.
+- **SQL Injection Validation:**
+  A dedicated module checks for potential SQL injection vulnerabilities, ensuring that only safe queries are execute
 
-- **Vector Search with pgvector:**  
+- **Vector Search with pgvector:**
   Uses pgvector to store text embeddings and perform semantic similarity searches, improving query accuracy.
 
-- **Streamlit UI:**  
-  Provides a user-friendly web interface where users can enter natural language queries and view the results in real-time.
+- **Streamlit UI:**
+  Provides a user-friendly web interface where users can enter natural language queries and view the results in real
 
 ## 3. How to Run It
 
@@ -61,4 +61,3 @@ Natural-Language-Search-For-DB/
 ├── .env                          # Environment variables (e.g., GROQ_API_KEY, DATABASE_URL)
 └── README.md                     # This documentation file
 ```
-
