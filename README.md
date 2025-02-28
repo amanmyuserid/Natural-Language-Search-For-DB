@@ -1,4 +1,4 @@
-Below is the modified README.md reflecting your requested changes:
+Below is the **modified README.md** with the **updated folder structure** to reflect your current files, while retaining the rest of the content as requested:
 
 ```markdown
 # Natural-Language-Search-For-DB
@@ -47,20 +47,22 @@ You will see the Streamlit UI where you can enter a natural language query to in
 ```
 Natural-Language-Search-For-DB/
 ├── app/
-│   └── run_query.py           # Command-line interface for generating, validating, and executing queries
+│   ├── database.py             # Manages DB connections & initialization
+│   ├── hybrid_search.py        # Demonstrates combining SQL + vector search
+│   ├── insert_data.py          # Inserts initial data into tables
+│   ├── insert_embeddings.py    # Generates & inserts vector embeddings
+│   └── run_query.py            # Command-line interface for generating, validating, & executing queries
 ├── config/
-│   ├── schema.py              # Contains the shared database schema context (SCHEMA_CONTEXT)
-│   └── settings.py            # Contains configuration variables (e.g., DATABASE_URL)
+│   └── schema.py               # Contains the shared DB schema context (SCHEMA_CONTEXT)
 ├── frontend/
-│   └── streamlit_app.py       # Streamlit UI for user interaction
+│   └── streamlit_app.py        # Streamlit UI for user interaction
 ├── models/
-│   ├── llm.py                 # Module for generating SQL queries from natural language using an LLM
+│   ├── llm.py                  # Module for generating SQL queries from natural language using an LLM
 │   └── sql_injection_validator.py  # Module to validate SQL queries for SQL injection vulnerabilities
-├── Dockerfile                 # Dockerfile for building the Docker image
-├── docker-compose.yml         # (Optional) Docker Compose configuration
-├── requirements.txt           # Python dependencies with versions
-├── .env                       # Environment variables (e.g., GROQ_API_KEY, DATABASE_URL)
-└── README.md                  # This documentation file
+├── Dockerfile                  # Dockerfile for building the Docker image
+├── requirements.txt            # Python dependencies with versions
+├── .env                        # Environment variables (e.g., GROQ_API_KEY, DATABASE_URL)
+└── README.md                   # This documentation file
 ```
 
 Each component is modular, ensuring that the code is easy to maintain, test, and extend.
